@@ -31,9 +31,9 @@ import json
 import math
 import os
 import random
-import sys
 from typing import Dict, List, Tuple
 
+import sys
 import pygame
 
 
@@ -275,6 +275,7 @@ class Menu(Scene):
             Button((start_x, start_y + 0*(h+gap), w, h), "Flashcards", lambda: app.change_scene(Flashcards(app))),
             Button((start_x, start_y + 1*(h+gap), w, h), "Quiz", lambda: app.change_scene(Quiz(app))),
             Button((start_x, start_y + 2*(h+gap), w, h), "Type", lambda: app.change_scene(TypeMode(app))),
+            Button((start_x, start_y + 3*(h+gap), w, h), "VOCAB", lambda: app.change_scene(VocabMode(app))),
         ]
 
         # Switch script label (bottom left)
@@ -788,6 +789,48 @@ class TypeMode(Scene):
             self.input.draw(surf, input_rect)
             if self.feedback_timer > 0:
                 draw_text(surf, self.feedback, FONT_MD, self.feedback_color, center=(WIDTH//2, 100))
+
+class VocabMode:
+    def __init__(self, app):
+        self.app = app
+        self.index = 0
+        self.user_input = ""
+        self.feedback = ""
+        self.color = (255, 255, 255)
+        self.pick_new_word()
+
+    def pick_new_word(self):
+        self.index = random.randint(0, len(WORDS["JAPANESE"]) - 1)
+        self.user_input = ""
+        self.feedback = ""
+        self.color = (255, 255, 255)
+
+    def handle(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                romaji = WORDS["ROMAJI"][self.index].upper()
+                english = WORDS["ENGLISH"][self.index]
+                if self.user_input.upper() == romaji:
+                    self.feedback = english
+                    self.color = (0, 255, 0)
+                else:
+                    self.feedback = romaji
+                    self.color = (255, 0, 0)
+                pygame.time.set_timer(pygame.USEREVENT, 1200)
+            elif event.key == pygame.K_BACKSPACE:
+                self.user_input = self.user_input[:-1]
+            elif event.unicode.isalpha():
+                self.user_input += event.unicode.upper()
+        elif event.type == pygame.USEREVENT:
+            pygame.time.set_timer(pygame.USEREVENT, 0)
+            self.pick_new_word()
+
+    def draw(self, screen):
+        screen.fill((20, 20, 30))
+        self.app.draw_text("VOCAB MODE", 50, self.app.W // 2, 60, (255, 255, 0))
+        self.app.draw_text(WORDS["JAPANESE"][self.index], 120, self.app.W // 2, self.app.H // 2 - 60)
+        self.app.draw_text(self.user_input, 60, self.app.W // 2, self.app.H // 2 + 20, (200, 200, 200))
+        self.app.draw_text(self.feedback, 50, self.app.W // 2, self.app.H // 2 + 100, self.color)
 
 
 # -----------------------------
