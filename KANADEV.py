@@ -124,6 +124,7 @@ KATAKANA = {
 # -----------------------------
 SAVE_FILE = "kanadev_progress.json"
 WORDS_FILE = "words.json"
+VOCAB_FILE = "vocab.json"
 
 def load_progress() -> Dict[str, Dict]:
     if os.path.exists(SAVE_FILE):
@@ -329,9 +330,8 @@ class Quiz(Scene):
             ("DAKUTEN & HANDAKUTEN", self._is_daku),
             ("COMBO KANA", self._is_combo),
         ]
-        self.selected_groups = [True, True, True]  # All selected by default
+        self.selected_groups = [False, False, False]  # All selected by default
 
-        # Build group selection "buttons" (just clickable text)
         self.group_rects = [None, None, None]
         self.start_btn_rect = None
 
@@ -566,7 +566,7 @@ class Flashcards(Scene):
             self.start_btn_rect = draw_text(surf, "START", FONT_MD, btn_color, center=(WIDTH//2, int(HEIGHT * 0.8)))
             draw_text(surf, "ESC to cancel", FONT_SM, MUTED, center=(WIDTH//2, HEIGHT-28))
         else:
-            draw_text(surf, "Flashcards (SPACE to flip)", FONT_SM, MUTED, topleft=(24, 20))
+            draw_text(surf, "Flashcards(SPACE to flip)", FONT_SM, MUTED, topleft=(24, 20))
             if not self.kana_list:
                 draw_text(surf, "No kana selected!", FONT_MD, WARN, center=(WIDTH//2, HEIGHT//2))
                 return
@@ -803,16 +803,19 @@ class VocabMode:
         self.pick_new_word()
 
     def pick_new_word(self):
-        self.index = random.randint(0, len(WORDS["JAPANESE"]) - 1)
+        self.index = random.randint(0, len(VOCAB["JAPANESE"]) - 1)
         self.user_input = ""
         self.feedback = ""
         self.color = (255, 255, 255)
 
+    def update(self, dt):
+        pass
+    
     def handle(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
-                romaji = WORDS["ROMAJI"][self.index].upper()
-                english = WORDS["ENGLISH"][self.index]
+                romaji = VOCAB["ROMAJI"][self.index].upper()
+                english = VOCAB["ENGLISH"][self.index]
                 if self.user_input.upper() == romaji:
                     self.feedback = english
                     self.color = (0, 255, 0)
@@ -828,12 +831,13 @@ class VocabMode:
             pygame.time.set_timer(pygame.USEREVENT, 0)
             self.pick_new_word()
 
-    def draw(self, screen):
-        screen.fill((20, 20, 30))
-        self.app.draw_text("VOCAB MODE", 50, self.app.W // 2, 60, (255, 255, 0))
-        self.app.draw_text(WORDS["JAPANESE"][self.index], 120, self.app.W // 2, self.app.H // 2 - 60)
-        self.app.draw_text(self.user_input, 60, self.app.W // 2, self.app.H // 2 + 20, (200, 200, 200))
-        self.app.draw_text(self.feedback, 50, self.app.W // 2, self.app.H // 2 + 100, self.color)
+    def draw(self, surf):
+        surf.fill(BG)
+        draw_text(surf, "VOCAB MODE", FONT_MD, ACCENT, center=(WIDTH // 2, 60))
+        draw_text(surf, VOCAB["JAPANESE"][self.index], FONT_LG, WHITE, center=(WIDTH // 2, HEIGHT // 2 - 60))
+        draw_text(surf, self.user_input, FONT_MD, MUTED, center=(WIDTH // 2, HEIGHT // 2 + 20))
+        draw_text(surf, self.feedback, FONT_MD, self.color, center=(WIDTH // 2, HEIGHT // 2 + 100))
+        draw_text(surf, "Type romaji, then Enter. ESC to Menu.", FONT_SM, MUTED, center=(WIDTH//2, HEIGHT-28))
 
 
 # -----------------------------
@@ -882,6 +886,15 @@ def load_words():
         return {"hiragana": [], "katakana": []}
 
 WORDS = load_words()
+
+def load_vocab():
+    try:
+        with open(VOCAB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"JAPANESE": [], "ROMAJI": [], "ENGLISH":[]}
+
+VOCAB = load_vocab()
 
 
 if __name__ == "__main__":
