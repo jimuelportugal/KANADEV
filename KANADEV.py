@@ -493,6 +493,9 @@ class Flashcards(Scene):
         self.index = 0
         self.show_romaji = False
 
+    def update(self, dt):
+        pass
+
     def _is_basic(self, kana):
         return kana in (
             list("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん") +
